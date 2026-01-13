@@ -164,3 +164,44 @@ def estimate_tokens(text: str) -> int:
         Estimated token count
     """
     return len(text) // 4
+
+
+def setup_temp_dirs(swap_drive: str = "D") -> None:
+    """Configure temporary directories and HuggingFace cache to use specified drive.
+    
+    This is useful for inference/merging operations that may use large amounts
+    of disk space. Configures:
+    - Windows temp directories (TMP, TEMP, TMPDIR) for temporary files
+    - HuggingFace cache directory (HF_HOME) for model downloads
+    
+    Args:
+        swap_drive: Drive letter to use for temporary files and cache (default: "D")
+    
+    Note:
+        Only affects Windows systems. On other platforms, uses system defaults.
+    """
+    import platform
+    
+    if platform.system() != "Windows":
+        # On non-Windows systems, use system defaults
+        return
+    
+    # Use environment variable if set, otherwise use swap_drive parameter
+    drive = os.getenv("SWAP_DRIVE", swap_drive)
+    
+    # Set up temp directory on the specified drive
+    temp_dir = f"{drive}:\\temp"
+    Path(temp_dir).mkdir(parents=True, exist_ok=True)
+    
+    # Set Windows temp environment variables
+    os.environ["TMP"] = temp_dir
+    os.environ["TEMP"] = temp_dir
+    
+    # Also set TMPDIR for compatibility with some libraries
+    os.environ["TMPDIR"] = temp_dir
+    
+    # Configure HuggingFace cache directory (only if not already set)
+    if "HF_HOME" not in os.environ:
+        hf_cache_dir = f"{drive}:\\.cache\\huggingface"
+        Path(hf_cache_dir).mkdir(parents=True, exist_ok=True)
+        os.environ["HF_HOME"] = hf_cache_dir

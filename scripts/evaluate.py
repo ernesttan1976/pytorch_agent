@@ -14,11 +14,14 @@ from peft import PeftModel
 from datasets import load_dataset
 from dotenv import load_dotenv
 
-from src.utils import setup_logging, load_config, save_json, load_json
+from src.utils import setup_logging, load_config, save_json, load_json, setup_temp_dirs
 from src.metrics import calculate_perplexity
 from src.formatting import format_messages
 
 load_dotenv()
+
+# Configure temp directories to use D drive for swap files
+setup_temp_dirs()
 
 
 def evaluate_loss(model, tokenizer, eval_dataset, config, logger):

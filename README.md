@@ -94,7 +94,8 @@ small-llm-ft/
 │   ├── sanity_check_dataset.py  # Dataset validator
 │   ├── train_sft.py             # Main training script
 │   ├── evaluate.py              # Evaluation script
-│   └── export_merge_adapter.py  # Model export/merge
+│   ├── export_merge_adapter.py  # Model export/merge
+│   └── serve_with_ollama.py     # Serve models with Ollama
 ├── src/
 │   ├── dataset_schema.py        # JSONL schema definitions
 │   ├── data_loaders.py          # Multi-format loaders
@@ -239,6 +240,53 @@ python scripts/export_merge_adapter.py \
 
 Merged model saved to `runs/<run_id>/merged_model/`
 
+### 6. Serve with Ollama
+
+Serve your trained models with Ollama for easy inference and chat:
+
+#### Interactive Mode (Recommended)
+
+```bash
+python scripts/serve_with_ollama.py
+```
+
+This will:
+- List all available trained models
+- Let you select one interactively
+- Check if merged model exists (prompts to merge if needed)
+- Generate a Modelfile for Ollama
+- Show commands to create and run the Ollama model
+
+#### Direct Mode
+
+```bash
+# Specify run directory directly
+python scripts/serve_with_ollama.py --run runs/qlora_sft_20260113_101843
+
+# Auto-merge if needed
+python scripts/serve_with_ollama.py --run runs/qlora_sft_20260113_101843 --merge-now
+
+# Skip merge check (if already merged)
+python scripts/serve_with_ollama.py --run runs/qlora_sft_20260113_101843 --skip-merge
+```
+
+#### Using the Generated Commands
+
+After running the script, you'll get commands like:
+
+```bash
+# Create Ollama model from Modelfile
+ollama create my-model -f runs/qlora_sft_20260113_101843/Modelfile
+
+# Run/chat with the model
+ollama run my-model
+
+# Or use the API
+curl http://localhost:11434/api/generate -d '{"model": "my-model", "prompt": "Hello!"}'
+```
+
+**Note**: You need Ollama installed and the model must be merged first (use `--merge` with `export_merge_adapter.py` or `--merge-now` with `serve_with_ollama.py`).
+
 ## Configuration
 
 ### Training Configs
@@ -264,7 +312,12 @@ Create `.env` from `.env.example`:
 ```bash
 HF_TOKEN=your_huggingface_token_here
 CUDA_VISIBLE_DEVICES=0
+SWAP_DRIVE=D  # Optional: Use D drive for swap files during inference (default: D)
 ```
+
+**Note**: The `SWAP_DRIVE` variable controls where temporary files and HuggingFace model cache are stored during model loading and merging operations. This is particularly useful on Windows systems where you want to use a specific drive (like D:) for large temporary files and model downloads. Defaults to "D" if not set. This sets:
+- Windows temp directories (TMP, TEMP, TMPDIR) to `D:\temp`
+- HuggingFace cache (HF_HOME) to `D:\.cache\huggingface`
 
 ## Troubleshooting
 

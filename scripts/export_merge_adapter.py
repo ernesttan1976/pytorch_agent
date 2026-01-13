@@ -13,9 +13,12 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel
 from dotenv import load_dotenv
 
-from src.utils import setup_logging, load_json
+from src.utils import setup_logging, load_json, setup_temp_dirs
 
 load_dotenv()
+
+# Configure temp directories to use D drive for swap files
+setup_temp_dirs()
 
 
 def main():
@@ -58,10 +61,13 @@ Examples:
     train_config = load_json(str(config_path))
     base_model_name = train_config["model"]["base_model"]
     
-    # Check if adapter exists
+    # Check if adapter exists - try both adapter_model directory and root directory
     adapter_path = run_dir / "adapter_model"
-    if not adapter_path.exists():
-        logger.error(f"Adapter not found in {adapter_path}")
+    if not adapter_path.exists() and (run_dir / "adapter_config.json").exists():
+        # Adapter files are in the root directory
+        adapter_path = run_dir
+    if not adapter_path.exists() or not (adapter_path / "adapter_config.json").exists():
+        logger.error(f"Adapter not found in {run_dir / 'adapter_model'} or {run_dir}")
         logger.error("Make sure training completed successfully")
         return 1
     
