@@ -45,13 +45,20 @@ def evaluate_loss(model, tokenizer, eval_dataset, config, logger):
         
         texts = []
         for example in batch:
-            messages = example.get("messages", [])
-            if isinstance(messages, str):
-                # Already formatted
-                texts.append(messages)
+            if isinstance(example, str):
+                # Already formatted text
+                texts.append(example)
+            elif isinstance(example, dict):
+                messages = example.get("messages", [])
+                if isinstance(messages, str):
+                    # Already formatted
+                    texts.append(messages)
+                else:
+                    text = format_messages(messages, tokenizer, add_generation_prompt=False)
+                    texts.append(text)
             else:
-                text = format_messages(messages, tokenizer, add_generation_prompt=False)
-                texts.append(text)
+                # Fallback
+                texts.append(str(example))
         
         # Tokenize
         inputs = tokenizer(
@@ -223,9 +230,12 @@ Examples:
         device_map="auto",
     )
     
-    # Load adapter
+    # Load adapter - check both adapter_model directory and root directory
     adapter_path = run_dir / "adapter_model"
-    if adapter_path.exists():
+    if not adapter_path.exists() and (run_dir / "adapter_config.json").exists():
+        # Adapter files are in the root directory
+        adapter_path = run_dir
+    if adapter_path.exists() and (adapter_path / "adapter_config.json").exists():
         model = PeftModel.from_pretrained(base_model_obj, str(adapter_path))
         logger.info("Loaded adapter model")
     else:

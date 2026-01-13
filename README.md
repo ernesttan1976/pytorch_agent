@@ -10,6 +10,7 @@ A production-ready, single-GPU fine-tuning pipeline for instruction-tuned LLMs u
 - **Comprehensive Evaluation**: Loss, perplexity, and prompt-based evaluation
 - **Model Export**: Export adapters and merge with base models
 - **WSL2 Optimized**: Reliable setup for Windows + WSL2 + CUDA
+- **Context7 MCP Integration**: Get latest library documentation automatically (see `CONTEXT7_SETUP.md`)
 
 ## Quick Start
 

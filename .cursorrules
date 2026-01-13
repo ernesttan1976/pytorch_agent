@@ -1,5 +1,11 @@
 # Cursor Agent Rules for LLM Fine-Tuning Pipeline
 
+## Context7 MCP Usage
+- **ALWAYS check for latest context using Context7 MCP** when available.
+- Use Context7 MCP to get up-to-date library documentation, API references, and code examples.
+- For library/API questions, library setup, configuration steps, or documentation queries, automatically use Context7 MCP tools to get the latest information.
+- Context7 provides version-specific, real-time documentation - prefer it over static knowledge when available.
+
 ## Development Principles
 - Prefer editing/creating scripts under `scripts/` and `src/`, not ad-hoc notebook code.
 - Any command the assistant suggests must be runnable from repo root.

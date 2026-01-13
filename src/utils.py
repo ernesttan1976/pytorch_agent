@@ -153,3 +153,14 @@ def get_run_dir(base_dir: str, run_name: str, create: bool = True) -> Path:
     
     return run_dir
 
+
+def estimate_tokens(text: str) -> int:
+    """Rough token estimate (4 chars per token average).
+    
+    Args:
+        text: Input text
+    
+    Returns:
+        Estimated token count
+    """
+    return len(text) // 4

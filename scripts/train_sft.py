@@ -12,11 +12,10 @@ import torch
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
-    TrainingArguments,
     BitsAndBytesConfig,
 )
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from trl import SFTTrainer
+from trl import SFTTrainer, SFTConfig
 from datasets import load_dataset
 from dotenv import load_dotenv
 
@@ -49,6 +48,11 @@ def load_model_and_tokenizer(config, logger):
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.pad_token_id = tokenizer.eos_token_id
+    
+    # Set a simple chat template if none exists (for models like phi-2)
+    if tokenizer.chat_template is None:
+        # Simple template that just concatenates messages
+        tokenizer.chat_template = "{% for message in messages %}{{ message['role'] + ': ' + message['content'] + '\\n' }}{% endfor %}"
     
     # Load model
     if train_config["method"] == "qlora":
@@ -192,7 +196,8 @@ Examples:
     
     # Training arguments
     train_config = config["train"]
-    training_args = TrainingArguments(
+    data_config = config["data"]
+    training_args = SFTConfig(
         output_dir=str(run_dir),
         per_device_train_batch_size=train_config["per_device_train_batch_size"],
         gradient_accumulation_steps=train_config["gradient_accumulation_steps"],
@@ -203,7 +208,7 @@ Examples:
         logging_steps=train_config.get("logging_steps", 10),
         eval_steps=train_config.get("eval_steps") if eval_dataset else None,
         save_steps=train_config.get("save_steps", 500),
-        evaluation_strategy="steps" if eval_dataset else "no",
+        eval_strategy="steps" if eval_dataset else "no",
         save_strategy="steps",
         bf16=train_config.get("bf16", False),
         fp16=not train_config.get("bf16", False) and not train_config["method"] == "qlora",
@@ -214,6 +219,10 @@ Examples:
         metric_for_best_model="eval_loss" if eval_dataset else None,
         greater_is_better=False if eval_dataset else None,
         seed=config["run"]["seed"],
+        # SFT-specific parameters
+        max_length=data_config["max_seq_length"],
+        packing=data_config.get("packing", False),
+        dataset_text_field="text",
     )
     
     # Formatting function for messages
@@ -254,15 +263,33 @@ Examples:
         )
     
     # Create trainer
+    # Use formatting_func if tokenizer doesn't have chat_template
+    formatting_func = None
+    if tokenizer.chat_template is None:
+        # Use our custom formatting function
+        def format_for_training(examples):
+            """Format examples for training when no chat template is available."""
+            texts = []
+            messages_col = examples.get("messages", [])
+            for messages in messages_col:
+                if isinstance(messages, str):
+                    texts.append(messages)
+                elif isinstance(messages, list):
+                    # Format messages manually
+                    text = format_messages(messages, tokenizer, add_generation_prompt=False)
+                    texts.append(text)
+                else:
+                    texts.append(str(messages))
+            return {"text": texts}
+        formatting_func = format_for_training
+    
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         args=training_args,
-        max_seq_length=config["data"]["max_seq_length"],
-        packing=config["data"].get("packing", False),
-        dataset_text_field="text",
+        processing_class=tokenizer,
+        formatting_func=formatting_func,
     )
     
     # Train
