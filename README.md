@@ -20,6 +20,14 @@ A production-ready, single-GPU fine-tuning pipeline for instruction-tuned LLMs u
 - NVIDIA drivers installed for WSL2
 - ~50GB free disk space (for models and datasets)
 
+### Verification
+
+**New to this project?** Start here:
+
+1. **Quick verification**: `python scripts/verify_setup.py` - Checks if everything is set up correctly
+2. **Quick start guide**: See `QUICK_START.md` for condensed setup instructions
+3. **Full verification guide**: See `VERIFICATION_GUIDE.md` for detailed step-by-step instructions
+
 ### Golden Path Commands
 
 From repo root in WSL2:
