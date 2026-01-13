@@ -1,0 +1,30 @@
+# Cursor Agent Rules for LLM Fine-Tuning Pipeline
+
+## Development Principles
+- Prefer editing/creating scripts under `scripts/` and `src/`, not ad-hoc notebook code.
+- Any command the assistant suggests must be runnable from repo root.
+- Keep secrets out of git. Use `.env` and `.env.example`.
+- Add small, testable steps: dataset sanity check, 50-step smoke training, then full run.
+- Always write outputs under `runs/<run_id>/`.
+
+## Code Organization
+- Scripts go in `scripts/` with clear CLI arguments.
+- Reusable modules go in `src/`.
+- Configuration files go in `configs/` (YAML format).
+- Never hardcode paths - use relative paths from repo root or config values.
+
+## Error Handling
+- Provide clear, actionable error messages.
+- If QLoRA fails, suggest falling back to LoRA.
+- Handle OOM gracefully with suggestions to reduce batch size or sequence length.
+
+## Testing
+- Always provide a smoke test mode (--smoke flag) for quick validation.
+- Validate inputs before processing (dataset format, config schema, etc.).
+- Use deterministic seeds for reproducibility.
+
+## Documentation
+- Update README.md when adding new features.
+- Add docstrings to all functions and classes.
+- Include examples in script help text (--help).
+

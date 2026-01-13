@@ -1,0 +1,17 @@
+eval:
+  max_samples: null  # null = use all
+  batch_size: 4
+  max_length: 4096
+
+prompts:
+  enabled: true
+  path: "data/eval_prompts.jsonl"  # optional
+  num_generations: 5
+  max_new_tokens: 512
+  temperature: 0.7
+  top_p: 0.9
+
+output:
+  report_path: "eval_report.json"
+  samples_path: "samples.md"
+
